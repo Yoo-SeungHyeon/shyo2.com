@@ -5,6 +5,7 @@ from scipy.io.wavfile import write
 from io import BytesIO
 import torch
 from transformers import PreTrainedTokenizerFast, LlamaForSequenceClassification, BartForConditionalGeneration, AutoTokenizer, pipeline
+import time
 
 st.set_page_config(page_title="Sentifl LLM", page_icon="☕", layout="wide")
 
@@ -370,7 +371,7 @@ with st.spinner("AI 준비중.... 준비가 완료되면 실행버튼이 나타�
     if class_tokenizer.pad_token is None:
         class_tokenizer.pad_token = class_tokenizer.eos_token
 
-    musicgen = pipeline("text-to-audio", model="facebook/musicgen-melody")
+    # musicgen = pipeline("text-to-audio", model="facebook/musicgen-melody")
 
 @st.cache_data
 def sentifl_llm(text):
@@ -402,19 +403,19 @@ def sentifl_llm(text):
 
     return summ_text, emotion
 
-@st.cache_data
-def generate_song(emotion):
-    output = musicgen(emotion)
-    audio = np.array(output['audio'][0][0])  # 2차원 배열을 1차원으로 변환
-    sampling_rate = output['sampling_rate']
+# @st.cache_data
+# def generate_song(emotion):
+#     output = musicgen(emotion)
+#     audio = np.array(output['audio'][0][0])  # 2차원 배열을 1차원으로 변환
+#     sampling_rate = output['sampling_rate']
     
-    audio = (audio * 32767).astype(np.int16)
+#     audio = (audio * 32767).astype(np.int16)
 
-    audio_buffer = BytesIO()
-    write(audio_buffer, sampling_rate, audio)
-    audio_buffer.seek(0)
+#     audio_buffer = BytesIO()
+#     write(audio_buffer, sampling_rate, audio)
+#     audio_buffer.seek(0)
 
-    return audio_buffer
+#     return audio_buffer
 
 
 if st.button("AI 실행"):
@@ -425,8 +426,10 @@ if st.button("AI 실행"):
             st.write("요약된 문장 : ", summ_text)
             st.write("감정 : ", emotion)
         with st.spinner("노래 생성 중...\n\n- GPU가 비싸서 CPU로만 생성하고 있어 많이 느려요!!\n\n- 빠르면 5분 느리면 10분 정도 걸려요!!"):
-            audio_file = generate_song(emotion)
-            st.audio(audio_file, format="audio/wav")
-            st.success("노래 생성 성공!!")
+            time.sleep(3)
+            st.warning("현재는 리소스 문제로 노래 생성 AI가 동작하지 않아요!!")
+            # audio_file = generate_song(emotion)
+            # st.audio(audio_file, format="audio/wav")
+            # st.success("노래 생성 성공!!")
     else:
         st.warning("문장을 입력하지 않았습니다. 문장을 입력하세요.")
