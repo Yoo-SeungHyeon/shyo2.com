@@ -1,0 +1,29 @@
+version: "3"
+
+services:
+  main:
+    container_name: main
+    image: yooseunghyeon/shyo2:main-0.0.2
+    ports:
+      - "8501:8501"
+    environment:
+      - SENTIFL_LLM_URL=http://sentifl-llm:8000/sentifl-llm
+    networks:
+      - shyo2-net
+
+  sentifl-llm:
+    container_name: sentifl-llm
+    image: yooseunghyeon/shyo2:sentifl-llm-0.0.1
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - shyo2-net
+
+networks:
+  shyo2-net:
+    driver: bridge

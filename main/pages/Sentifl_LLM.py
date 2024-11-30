@@ -1,11 +1,8 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
-from scipy.io.wavfile import write
-from io import BytesIO
-import torch
-from transformers import PreTrainedTokenizerFast, LlamaForSequenceClassification, BartForConditionalGeneration, AutoTokenizer, pipeline
-import time
+import os
+import requests
+import json
 
 st.set_page_config(page_title="Sentifl LLM", page_icon="☕", layout="wide")
 
@@ -357,77 +354,25 @@ st.divider()
 st.subheader("Sentifl LLM")
 sentence = st.text_area("문장을 입력하세요", height=200)
 
-with st.spinner("AI 준비중.... 준비가 완료되면 실행버튼이 나타납니다.\n\n (예상 소요시간: 5분~10분)"):
-    # 각각의 모델과 토크나이저 불러오기
-    summ_path = 'gogamza/kobart-summarization'
-    summ_tokenizer =  PreTrainedTokenizerFast.from_pretrained(summ_path)
-    summ_model = BartForConditionalGeneration.from_pretrained(summ_path)
 
-    class_path = "shyo2/emotion_classification"
-    class_model = LlamaForSequenceClassification.from_pretrained(class_path, num_labels=7)
-    class_tokenizer = AutoTokenizer.from_pretrained(class_path)
 
-    # pad_token 변경
-    if class_tokenizer.pad_token is None:
-        class_tokenizer.pad_token = class_tokenizer.eos_token
-
-    # musicgen = pipeline("text-to-audio", model="facebook/musicgen-melody")
-
-@st.cache_data
-def sentifl_llm(text):
-
-    emotion_list = ["공포","놀람","분노","슬픔","중립","행복","혐오"]
-
-    text = text.replace("\n", "")
-
-    raw_input_ids = summ_tokenizer.encode(text)
-    input_ids = [summ_tokenizer.bos_token_id] + raw_input_ids + [summ_tokenizer.eos_token_id]
-
-    # 모델 추론 (문장 요약)
-    summary_ids = summ_model.generate(torch.tensor([input_ids]), max_length=128, early_stopping=True)
-    
-    # 요약 결과 반환
-    summ_text = summ_tokenizer.decode(summary_ids.squeeze().tolist(), skip_special_tokens=True)
-
-    # 입력 텍스트 토크나이징
-    inputs = class_tokenizer(summ_text, return_tensors="pt", padding=True, truncation=True)
-
-    # 모델 추론 (감정 분류)
-    with torch.no_grad():
-        outputs = class_model(**inputs)
-        logits = outputs.logits
-        predicted_class = torch.argmax(logits, dim=-1)
-
-    # 결과 반환
-    emotion = emotion_list[predicted_class.item()]
-
-    return summ_text, emotion
-
-# @st.cache_data
-# def generate_song(emotion):
-#     output = musicgen(emotion)
-#     audio = np.array(output['audio'][0][0])  # 2차원 배열을 1차원으로 변환
-#     sampling_rate = output['sampling_rate']
-    
-#     audio = (audio * 32767).astype(np.int16)
-
-#     audio_buffer = BytesIO()
-#     write(audio_buffer, sampling_rate, audio)
-#     audio_buffer.seek(0)
-
-#     return audio_buffer
-
+url = os.getenv("SENTIFL_LLM_URL")
+headers = {'accept': 'application/json','Content-Type': 'application/json'}
+data = {"sentence": sentence}
 
 if st.button("AI 실행"):
     if sentence.strip():
         with st.spinner("문장 요약 & 감정 추출 중..."):
-            summ_text, emotion = sentifl_llm(sentence)
+            response = requests.post(url, json=data, headers=headers)
+            response_data = response.json()
+            summ_text = response_data.get("summary")
+            emotion = response_data.get("emotion")
             st.success("요약 및 추출 성공!!")
             st.write("요약된 문장 : ", summ_text)
             st.write("감정 : ", emotion)
-        with st.spinner("노래 생성 중...\n\n- GPU가 비싸서 CPU로만 생성하고 있어 많이 느려요!!\n\n- 빠르면 5분 느리면 10분 정도 걸려요!!"):
-            time.sleep(3)
-            st.warning("현재는 리소스 문제로 노래 생성 AI가 동작하지 않아요!!")
+        # with st.spinner("노래 생성 중...\n\n- GPU가 비싸서 CPU로만 생성하고 있어 많이 느려요!!\n\n- 빠르면 5분 느리면 10분 정도 걸려요!!"):
+        #     time.sleep(3)
+        #     st.warning("현재는 리소스 문제로 노래 생성 AI가 동작하지 않아요!!")
             # audio_file = generate_song(emotion)
             # st.audio(audio_file, format="audio/wav")
             # st.success("노래 생성 성공!!")
