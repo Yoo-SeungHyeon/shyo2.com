@@ -325,31 +325,34 @@ st.write("파인튜닝 결과, epoch4에서 약 48%의 정확도를 얻었습니
 
 st.divider()
 
-st.subheader("노래 생성 AI")
-st.write("노래 생성 AI는 musicgen-melody 모델을 거의 그대로 사용했습니다. \n\n 대신 프롬프트로 앞서 생성한 요약문과 감정을 입력해서 글에 맞는 BGM이 생성되도록 했습니다.\n\n 현재는 리소스 문제로 text로만 음악을 생성하고 있습니다!")
-st.link_button("musicgen-melody", "https://huggingface.co/facebook/musicgen-melody")
-st.code("""
-# high-level-pipeline을 활용한 노래 생성
-from transformers import pipeline
+# st.subheader("노래 생성 AI")
+# st.write("노래 생성 AI는 musicgen-melody 모델을 거의 그대로 사용했습니다. \n\n 대신 프롬프트로 앞서 생성한 요약문과 감정을 입력해서 글에 맞는 BGM이 생성되도록 했습니다.\n\n 현재는 리소스 문제로 text로만 음악을 생성하고 있습니다!")
+# st.link_button("musicgen-melody", "https://huggingface.co/facebook/musicgen-melody")
+# st.code("""
+# # high-level-pipeline을 활용한 노래 생성
+# from transformers import pipeline
 
-musicgen = pipeline("text-to-audio", model="facebook/musicgen-melody")
+# musicgen = pipeline("text-to-audio", model="facebook/musicgen-melody")
 
-@st.cache_data
-def generate_song(emotion):
-    output = musicgen(emotion)
-    audio = np.array(output['audio'][0][0])  # 2차원 배열을 1차원으로 변환
-    sampling_rate = output['sampling_rate']
+# @st.cache_data
+# def generate_song(emotion):
+#     output = musicgen(emotion)
+#     audio = np.array(output['audio'][0][0])  # 2차원 배열을 1차원으로 변환
+#     sampling_rate = output['sampling_rate']
     
-    audio = (audio * 32767).astype(np.int16)
+#     audio = (audio * 32767).astype(np.int16)
 
-    audio_buffer = BytesIO()
-    write(audio_buffer, sampling_rate, audio)
-    audio_buffer.seek(0)
+#     audio_buffer = BytesIO()
+#     write(audio_buffer, sampling_rate, audio)
+#     audio_buffer.seek(0)
 
-    return audio_buffer
-""")
+#     return audio_buffer
+# """)
 
-st.divider()
+# st.divider()
+
+st.write("""facebook/musicgen-melody 모델을 활용한 노래 생성은 따로 작업한것 없이 연결만 했기에 따로 추가하지 않았습니다. \n\n 아래에는 노래 생성만이 제외된 Sentifl LLM을 테스트해보실 수 있습니다.""")
+
 
 st.subheader("Sentifl LLM")
 sentence = st.text_area("문장을 입력하세요", height=200)
